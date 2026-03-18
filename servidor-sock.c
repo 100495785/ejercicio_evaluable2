@@ -8,6 +8,7 @@
 #include <unistd.h> // close, read, write
 #include <errno.h> // errno
 #include <pthread.h> // pthread_create, pthread_detach
+#include <signal.h> // signal, SIGINT
 
 #include <sys/types.h> // socket, bind
 #include <sys/socket.h> // socket, bind
@@ -18,6 +19,8 @@
 #define MAX_LINE 512 // Tamaño máximo para líneas de texto en el protocolo
 #define MAX_STR 256 // Máximo tamaño de strings (255 chars útiles + '\0')
 #define MAX_V2 32 // Máximo número de elementos en V_value2
+
+static int server_fd = -1; // Socket de escucha del servidor para poder cerrarlo al recibir SIGINT
 
 // Códigos de operación del protocolo
 #define OP_DESTROY     1
@@ -361,11 +364,27 @@ static void *thread_cliente(void *arg) {
     return NULL; // Terminamos el hilo
 }
 
+// Manejador de la señal SIGINT (Ctrl + C)
+static void handle_sigint(int sig) {
+    (void)sig; // Evitamos warning por parámetro no usado
+
+    printf("\nCerrando servidor de forma segura...\n");
+    fflush(stdout);
+
+    if (server_fd >= 0) { // Si el socket de escucha está abierto -> lo cerramos
+        close(server_fd); // Cerramos el socket de escucha para liberar el puerto y permitir que el servidor termine correctamente
+    }
+
+    exit(0); // Terminamos el proceso
+}
+
 // Main del servidor
 int main(int argc, char *argv[]) {
     struct addrinfo hints, *res, *rp; // Variables para configurar el socket y almacenar las direcciones
     int listen_fd = -1; // Variable para el descriptor del socket de escucha
     int yes = 1; // Variable para la opción SO_REUSEADDR
+
+    signal(SIGINT, handle_sigint); // Configuramos el manejador de la señal SIGINT
 
     if (argc != 2) { // Si no se especifica el puerto como argumento -> error
         fprintf(stderr, "Uso: %s <PUERTO>\n", argv[0]); // Imprimimos el mensaje de uso en stderr
@@ -409,6 +428,8 @@ int main(int argc, char *argv[]) {
         close(listen_fd); // Cerramos el socket de escucha
         return 1; // Devolvemos 1 para indicar error
     }
+
+    server_fd = listen_fd; // Guardamos el socket de escucha para poder cerrarlo al recibir SIGINT
 
     printf("[SERVIDOR] Escuchando en el puerto %s...\n", argv[1]); // Imprimimos un mensaje indicando que el servidor está escuchando en el puerto especificado
     fflush(stdout); // Aseguramos que el mensaje se imprima antes de aceptar conexiones
