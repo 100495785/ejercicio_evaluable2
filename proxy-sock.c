@@ -15,6 +15,7 @@
 #define MAX_LINE 512 // Tamaño máximo para líneas de texto en el protocolo
 #define MAX_STR 256 // Máximo tamaño de strings (255 chars útiles + '\0')
 #define MAX_V2 32 // Máximo número de elementos en V_value2
+#define MAX_STRING_LEN 255 // Máxima longitud de strings (sin contar el '\0')
 
 // Códigos de operación del protocolo
 #define OP_DESTROY     1
@@ -238,7 +239,10 @@ int destroy(void) {
 int set_value(char *key, char *value1, int N_value2, float *V_value2, struct Paquete value3) {
     int fd, result, i; // Variable para almacenar el resultado devuelto por el servidor y un índice para iterar
 
-    if (key == NULL || value1 == NULL || V_value2 == NULL) return -1; // Si alguno de los punteros es NULL -> error
+    if (key == NULL || value1 == NULL || V_value2 == NULL) return -1; // Si algún puntero es NULL -> error
+    if (N_value2 < 1 || N_value2 > MAX_V2) return -1; // Si N_value2 no está entre 1 y MAX_V2 -> error
+    if (strnlen(key, MAX_STR) > MAX_STRING_LEN) return -1; // Si key supera 255 caracteres útiles -> error
+    if (strnlen(value1, MAX_STR) > MAX_STRING_LEN) return -1; // Si value1 supera 255 caracteres útiles -> error
 
     fd = connect_to_server(); // Intentamos establecer una conexión con el servidor
     if (fd < 0) return -1; // Si no se pudo conectar -> error
@@ -271,9 +275,10 @@ error:
 int get_value(char *key, char *value1, int *N_value2, float *V_value2, struct Paquete *value3) {
     int fd, result, i; // Variable para almacenar el resultado devuelto por el servidor y un índice para iterar
 
-    if (key == NULL || value1 == NULL || N_value2 == NULL || V_value2 == NULL || value3 == NULL) { // Si alguno de los punteros es NULL -> error
+    if (key == NULL || value1 == NULL || N_value2 == NULL || V_value2 == NULL || value3 == NULL) { // Si algún puntero es NULL -> error
         return -1; // Devolvemos -1 para indicar error
     }
+    if (strnlen(key, MAX_STR) > MAX_STRING_LEN) return -1; // Si key supera 255 caracteres útiles -> error
 
     fd = connect_to_server(); // Intentamos establecer una conexión con el servidor
     if (fd < 0) return -1; // Si no se pudo conectar -> error
@@ -317,7 +322,10 @@ error:
 int modify_value(char *key, char *value1, int N_value2, float *V_value2, struct Paquete value3) {
     int fd, result, i; // Variable para almacenar el resultado devuelto por el servidor y un índice para iterar
 
-    if (key == NULL || value1 == NULL || V_value2 == NULL) return -1; // Si alguno de los punteros es NULL -> error
+    if (key == NULL || value1 == NULL || V_value2 == NULL) return -1; // Si algún puntero es NULL -> error
+    if (N_value2 < 1 || N_value2 > MAX_V2) return -1; // Si N_value2 no está entre 1 y MAX_V2 -> error
+    if (strnlen(key, MAX_STR) > MAX_STRING_LEN) return -1; // Si key supera 255 caracteres útiles -> error
+    if (strnlen(value1, MAX_STR) > MAX_STRING_LEN) return -1; // Si value1 supera 255 caracteres útiles -> error
 
     fd = connect_to_server(); // Intentamos establecer una conexión con el servidor
     if (fd < 0) return -1; // Si no se pudo conectar -> error
@@ -350,7 +358,8 @@ error:
 int delete_key(char *key) {
     int fd, result; // Variable para almacenar el resultado devuelto por el servidor
 
-    if (key == NULL) return -1; // Si la clave es NULL -> error
+    if (key == NULL) return -1; // Si key es NULL -> error
+    if (strnlen(key, MAX_STR) > MAX_STRING_LEN) return -1; // Si key supera 255 caracteres útiles -> error
 
     fd = connect_to_server(); // Intentamos establecer una conexión con el servidor
     if (fd < 0) return -1; // Si no se pudo conectar -> error
@@ -373,7 +382,8 @@ error:
 int exist(char *key) {
     int fd, result; // Variable para almacenar el resultado devuelto por el servidor
 
-    if (key == NULL) return -1; // Si la clave es NULL -> error
+    if (key == NULL) return -1; // Si key es NULL -> error
+    if (strnlen(key, MAX_STR) > MAX_STRING_LEN) return -1; // Si key supera 255 caracteres útiles -> error
 
     fd = connect_to_server(); // Intentamos establecer una conexión con el servidor
     if (fd < 0) return -1; // Si no se pudo conectar -> error

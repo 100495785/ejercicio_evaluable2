@@ -1,4 +1,4 @@
-// Programa de test para la API de claves (local)
+// Programa de test para la API de claves
 
 #include <stdio.h>   // printf
 #include <string.h>  // strcmp, memset
